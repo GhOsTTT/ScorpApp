@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Scorp</string>
+    <string name="no_one_here">No one here!</string>
+    <string name="item_text">Hello %s (%d)</string>
+    <string name="error_message">Upps:) there must be error, do you want to refresh it ?</string>
+    <string name="retry">Retry</string>
+</resources>
