@@ -3,6 +3,8 @@ package com.scorp.casestudy.ui.view
 import android.os.Bundle
 import android.util.ArrayMap
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
@@ -17,6 +19,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var userAdapter: UserAdapter
     private lateinit var dataSource: DataSource
     private var userList: ArrayMap<Int, Person> = ArrayMap<Int, Person>()
+    private lateinit var  fetchCompletionHandler:FetchCompletionHandler
     private var nextPagingId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,17 +29,16 @@ class MainActivity : AppCompatActivity() {
         setContentView(view)
         dataSource = DataSource()
         setupUi()
-        binding.isRecyclerViewVisible = true
     }
 
     private fun setupUi() {
         binding.userSwipeRefresh.isRefreshing = true
-        val fetchCompletionHandler = object : FetchCompletionHandler {
+        fetchCompletionHandler = object : FetchCompletionHandler {
             override fun invoke(fetchResponse: FetchResponse?, fetchError: FetchError?) {
                 if(nextPagingId == null && !userList.isNullOrEmpty())
                     userList = ArrayMap<Int, Person>()
                 if(fetchResponse?.people.isNullOrEmpty() && fetchError?.errorDescription.isNullOrEmpty()){
-                    binding.isRecyclerViewVisible = false //according to business logic userList will set to emptyList
+                    binding.isRecyclerViewVisible = true //according to business logic userList will set to emptyList
                     nextPagingId = fetchResponse?.next// people list is empty but nextPagingId is not null because of that i changed nextPagingId
                     //6) Pass successful response's `next` identifier into `fetch` method in order to get next "pages".
                     binding.userSwipeRefresh.isRefreshing = false
@@ -45,37 +47,32 @@ class MainActivity : AppCompatActivity() {
                     binding.showErrorMessage = false
                     Snackbar.make(binding.userRecyclerView, getString(R.string.error_message), Snackbar.LENGTH_INDEFINITE)
                         .setAction(getString(R.string.retry)) {
-                            dataSource.fetch(nextPagingId, this)
+                            fetchData()
                         }
                         .show()
                     binding.userSwipeRefresh.isRefreshing = false
                     return
-                }/*else if(p2?.errorDescription =="Parameter error"){
-                    binding.isRecyclerViewVisible = false
-
-                    return
-                }*/
+                }
                 fetchResponse?.people?.forEach {
-                   // println("Person Fetched = name = ${it.fullName} id =  ${it.id}")
+                   println("Person Fetched = name = ${it.fullName} id =  ${it.id}")
                     userList[it.id] = it
+                    userAdapter.notifyItemChanged(userList.indexOfKey(it.id))
                 }
                 println("Person Fetched = PeopleSize = ${fetchResponse?.people?.size ?: -1 } next =  ${fetchResponse?.next} error = ${fetchError?.errorDescription}")
                 nextPagingId = fetchResponse?.next
-                userAdapter.personModelList = userList
-                userAdapter.notifyDataSetChanged()
                 binding.userSwipeRefresh.isRefreshing = false
-                binding.isRecyclerViewVisible = true
+                binding.isRecyclerViewVisible = false
             }
 
         }
         binding.userSwipeRefresh.setOnRefreshListener {
             nextPagingId = null
-            dataSource.fetch(nextPagingId, fetchCompletionHandler)
+            fetchData()
         }
         userAdapter = UserAdapter() { personItem ->
 
         }
-
+        userAdapter.personModelList = userList
         binding.userRecyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = userAdapter
@@ -83,12 +80,16 @@ class MainActivity : AppCompatActivity() {
                 override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                     super.onScrollStateChanged(recyclerView, newState)
                     if (!recyclerView.canScrollVertically(1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
-                        binding.userSwipeRefresh.isRefreshing = true
-                        dataSource.fetch(nextPagingId, fetchCompletionHandler)
+                        fetchData()
                     }
                 }
             })
         }
+        fetchData()
+    }
+
+    private fun fetchData(){
+        binding.userSwipeRefresh.isRefreshing = true
         dataSource.fetch(nextPagingId, fetchCompletionHandler)
     }
 }

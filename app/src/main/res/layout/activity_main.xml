@@ -45,14 +45,14 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     tools:itemCount="5"
-                    android:visibility="@{isRecyclerViewVisible  &amp;&amp; showErrorMessage==false  ? View.VISIBLE : View.GONE}"
+                    android:visibility="@{isRecyclerViewVisible == false  &amp;&amp; showErrorMessage==false  ? View.VISIBLE : View.GONE}"
                     tools:listitem="@layout/movie_item_layout" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:visibility="@{isRecyclerViewVisible &amp;&amp; showErrorMessage==false ? View.GONE : View.VISIBLE}"
+                    android:visibility="@{isRecyclerViewVisible == false &amp;&amp; showErrorMessage==false ? View.GONE : View.VISIBLE}"
                     android:text="@string/no_one_here"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
