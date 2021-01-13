@@ -32,16 +32,16 @@ class MainActivity : AppCompatActivity() {
     private fun setupUi() {
         binding.userSwipeRefresh.isRefreshing = true
         val fetchCompletionHandler = object : FetchCompletionHandler {
-            override fun invoke(p1: FetchResponse?, p2: FetchError?) {
+            override fun invoke(fetchResponse: FetchResponse?, fetchError: FetchError?) {
                 if(nextPagingId == null && !userList.isNullOrEmpty())
                     userList = ArrayMap<Int, Person>()
-                if(p1?.people.isNullOrEmpty() && p2?.errorDescription.isNullOrEmpty()){
+                if(fetchResponse?.people.isNullOrEmpty() && fetchError?.errorDescription.isNullOrEmpty()){
                     binding.isRecyclerViewVisible = false //according to business logic userList will set to emptyList
-                    nextPagingId = p1?.next// people list is empty but nextPagingId is not null because of that i changed nextPagingId
+                    nextPagingId = fetchResponse?.next// people list is empty but nextPagingId is not null because of that i changed nextPagingId
                     //6) Pass successful response's `next` identifier into `fetch` method in order to get next "pages".
                     binding.userSwipeRefresh.isRefreshing = false
                     return
-                }else if(p2?.errorDescription == "Internal Server Error" || p2?.errorDescription =="Parameter error"){
+                }else if(fetchError?.errorDescription == "Internal Server Error" || fetchError?.errorDescription =="Parameter error"){
                     binding.showErrorMessage = false
                     Snackbar.make(binding.userRecyclerView, getString(R.string.error_message), Snackbar.LENGTH_INDEFINITE)
                         .setAction(getString(R.string.retry)) {
@@ -55,12 +55,12 @@ class MainActivity : AppCompatActivity() {
 
                     return
                 }*/
-                p1?.people?.forEach {
+                fetchResponse?.people?.forEach {
                    // println("Person Fetched = name = ${it.fullName} id =  ${it.id}")
                     userList[it.id] = it
                 }
-                println("Person Fetched = PeopleSize = ${p1?.people?.size ?: -1 } next =  ${p1?.next} error = ${p2?.errorDescription}")
-                nextPagingId = p1?.next
+                println("Person Fetched = PeopleSize = ${fetchResponse?.people?.size ?: -1 } next =  ${fetchResponse?.next} error = ${fetchError?.errorDescription}")
+                nextPagingId = fetchResponse?.next
                 userAdapter.personModelList = userList
                 userAdapter.notifyDataSetChanged()
                 binding.userSwipeRefresh.isRefreshing = false
