@@ -35,8 +35,10 @@ class MainActivity : AppCompatActivity() {
         binding.userSwipeRefresh.isRefreshing = true
         fetchCompletionHandler = object : FetchCompletionHandler {
             override fun invoke(fetchResponse: FetchResponse?, fetchError: FetchError?) {
-                if(nextPagingId == null && !userList.isNullOrEmpty())
-                    userList = ArrayMap<Int, Person>()
+                if(nextPagingId == null && !userList.isNullOrEmpty()) {
+                    userList.clear()
+                    userAdapter.notifyDataSetChanged()
+                }
                 if(fetchResponse?.people.isNullOrEmpty() && fetchError?.errorDescription.isNullOrEmpty()){
                     binding.isRecyclerViewVisible = true //according to business logic userList will set to emptyList
                     nextPagingId = fetchResponse?.next// people list is empty but nextPagingId is not null because of that i changed nextPagingId
@@ -54,11 +56,17 @@ class MainActivity : AppCompatActivity() {
                     return
                 }
                 fetchResponse?.people?.forEach {
-                   println("Person Fetched = name = ${it.fullName} id =  ${it.id}")
-                    userList[it.id] = it
-                    userAdapter.notifyItemChanged(userList.indexOfKey(it.id))
+                    if(userList.indexOfKey(it.id)< 0){
+                        userList[it.id] = it
+                        println("notifyItemInserted ${userList.indexOfKey(it.id)} size = ${userList.size}")
+                        userAdapter.notifyItemInserted(userList.indexOfKey(it.id))
+
+                    }else{
+                        userList[it.id] = it
+                        println("notifyItemChanged")
+                        userAdapter.notifyItemChanged(userList.indexOfKey(it.id))
+                    }
                 }
-                println("Person Fetched = PeopleSize = ${fetchResponse?.people?.size ?: -1 } next =  ${fetchResponse?.next} error = ${fetchError?.errorDescription}")
                 nextPagingId = fetchResponse?.next
                 binding.userSwipeRefresh.isRefreshing = false
                 binding.isRecyclerViewVisible = false
