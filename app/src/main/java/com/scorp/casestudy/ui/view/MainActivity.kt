@@ -18,7 +18,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var userAdapter: UserAdapter
     private lateinit var dataSource: DataSource
-    private var userList: ArrayMap<Int, Person> = ArrayMap<Int, Person>()
+    private var  userList: MutableList<Person> = mutableListOf()
+
     private lateinit var  fetchCompletionHandler:FetchCompletionHandler
     private var nextPagingId: String? = null
 
@@ -35,10 +36,6 @@ class MainActivity : AppCompatActivity() {
         binding.userSwipeRefresh.isRefreshing = true
         fetchCompletionHandler = object : FetchCompletionHandler {
             override fun invoke(fetchResponse: FetchResponse?, fetchError: FetchError?) {
-                if(nextPagingId == null && !userList.isNullOrEmpty()) {
-                    userList.clear()
-                    userAdapter.notifyDataSetChanged()
-                }
                 if(fetchResponse?.people.isNullOrEmpty() && fetchError?.errorDescription.isNullOrEmpty()){
                     binding.isRecyclerViewVisible = true //according to business logic userList will set to emptyList
                     nextPagingId = fetchResponse?.next// people list is empty but nextPagingId is not null because of that i changed nextPagingId
@@ -55,18 +52,16 @@ class MainActivity : AppCompatActivity() {
                     binding.userSwipeRefresh.isRefreshing = false
                     return
                 }
-                fetchResponse?.people?.forEach {
-                    if(userList.indexOfKey(it.id)< 0){
-                        userList[it.id] = it
-                        println("notifyItemInserted ${userList.indexOfKey(it.id)} size = ${userList.size}")
-                        userAdapter.notifyItemInserted(userList.indexOfKey(it.id))
-
-                    }else{
-                        userList[it.id] = it
-                        println("notifyItemChanged")
-                        userAdapter.notifyItemChanged(userList.indexOfKey(it.id))
+                fetchResponse?.people?.forEach { personItem->
+                    val userIndex = userList.indexOfFirst { it.id == personItem.id }
+                    if(userIndex != -1) {
+                        userList.removeAt(userIndex)
+                        userAdapter.notifyItemRemoved(userIndex)
                     }
+                    userList.add(personItem)
+                    userAdapter.notifyItemInserted(userList.size)
                 }
+                println(userList)
                 nextPagingId = fetchResponse?.next
                 binding.userSwipeRefresh.isRefreshing = false
                 binding.isRecyclerViewVisible = false
@@ -75,6 +70,8 @@ class MainActivity : AppCompatActivity() {
         }
         binding.userSwipeRefresh.setOnRefreshListener {
             nextPagingId = null
+            userList.clear()
+            userAdapter.notifyDataSetChanged()
             fetchData()
         }
         userAdapter = UserAdapter() { personItem ->

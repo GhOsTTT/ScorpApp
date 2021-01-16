@@ -13,7 +13,7 @@ import com.scorp.casestudy.util.Person
 class UserAdapter (private val listener: (personModel: Person) -> Unit) :
     ListAdapter<Person, RecyclerView.ViewHolder>(MovieDiffCallback()) {
 
-    var  personModelList: ArrayMap<Int,Person>? = null
+    var  personModelList: MutableList<Person>? = null
 
     private class DataViewHolder(
         private val binding: MovieItemLayoutBinding,
@@ -51,7 +51,7 @@ class UserAdapter (private val listener: (personModel: Person) -> Unit) :
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val itemViewHolder = holder as DataViewHolder
-        personModelList?.valueAt(position)?.let { itemViewHolder.bind(it) }
+        personModelList?.get(position)?.let { itemViewHolder.bind(it) }
     }
 }
 
